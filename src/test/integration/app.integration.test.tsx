@@ -8,6 +8,7 @@ async function createCandidateFlow(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('link', { name: 'Ny match' }))
   await user.type(screen.getByLabelText('Hemmalag'), 'Malmö')
   await user.type(screen.getByLabelText('Bortalag'), 'Hammarby')
+  await user.type(screen.getByLabelText('Starttid'), '2026-07-15T19:30')
   await user.type(screen.getByLabelText('Hemmaodds'), '1.9')
   await user.type(screen.getByLabelText('Drawodds'), '3.9')
   await user.type(screen.getByLabelText('Bortaodds'), '4.8')

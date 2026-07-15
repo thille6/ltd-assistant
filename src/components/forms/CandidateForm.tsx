@@ -72,11 +72,23 @@ export function CandidateForm({ settings, onSave }: CandidateFormProps) {
       return
     }
 
+    const kickoffAt = form.kickoffAt
+      ? (() => {
+          const parsed = new Date(form.kickoffAt)
+          return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString()
+        })()
+      : undefined
+
+    if (kickoffAt === null) {
+      setMessage('Starttiden har ogiltigt format.')
+      return
+    }
+
     const match: MatchDetails = {
       homeTeam: form.homeTeam.trim(),
       awayTeam: form.awayTeam.trim(),
       league: form.league.trim() || undefined,
-      kickoffAt: form.kickoffAt || undefined,
+      kickoffAt,
     }
 
     if (!match.homeTeam || !match.awayTeam) {
@@ -84,9 +96,13 @@ export function CandidateForm({ settings, onSave }: CandidateFormProps) {
       return
     }
 
-    await onSave(createCandidate(match, odds, evaluation))
-    setForm(initialState)
-    setMessage('Kandidaten sparades.')
+    try {
+      await onSave(createCandidate(match, odds, evaluation))
+      setForm(initialState)
+      setMessage('Kandidaten sparades.')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Kandidaten kunde inte sparas.')
+    }
   }
 
   return (

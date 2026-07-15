@@ -43,9 +43,28 @@ export function LiveAssistantPage() {
   const { candidates, settings, getLiveSnapshots, saveLiveSnapshot, saveTrade, saveCandidate } = useAppContext()
   const candidate = candidates.find((item) => item.id === id)
   const [stats, setStats] = useState<LiveStats>(createInitialLiveStats())
+  const [form, setForm] = useState({
+    minute: '0',
+    layOdds: '',
+    liveXg: '',
+    homeShots: '0',
+    awayShots: '0',
+    shotsOnTargetTotal: '0',
+  })
   const [events, setEvents] = useState<LiveEvent[]>([])
   const [savedSnapshots, setSavedSnapshots] = useState<LiveSnapshot[]>([])
   const [message, setMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    setForm({
+      minute: String(stats.minute),
+      layOdds: stats.layOdds?.toString() ?? '',
+      liveXg: stats.liveXg?.toString() ?? '',
+      homeShots: String(stats.homeShots),
+      awayShots: String(stats.awayShots),
+      shotsOnTargetTotal: String(stats.homeShotsOnTarget + stats.awayShotsOnTarget),
+    })
+  }, [stats])
 
   useEffect(() => {
     if (!candidate) {
@@ -129,6 +148,29 @@ export function LiveAssistantPage() {
     setEvents(rest)
   }
 
+  function commitIntegerField(field: 'minute' | 'homeShots' | 'awayShots' | 'shotsOnTargetTotal') {
+    const rawValue = form[field]
+    const parsed = safeNumber(rawValue)
+
+    if (field === 'shotsOnTargetTotal') {
+      const total = Math.max(0, Math.round(parsed ?? 0))
+      setStats((current) => ({
+        ...current,
+        homeShotsOnTarget: Math.ceil(total / 2),
+        awayShotsOnTarget: Math.floor(total / 2),
+      }))
+      return
+    }
+
+    const nextValue = Math.max(0, Math.round(parsed ?? 0))
+    setStats((current) => ({ ...current, [field]: nextValue }))
+  }
+
+  function commitDecimalField(field: 'layOdds' | 'liveXg') {
+    const parsed = safeNumber(form[field])
+    setStats((current) => ({ ...current, [field]: parsed }))
+  }
+
   async function handleSaveSnapshot() {
     const snapshot: LiveSnapshot = {
       id: crypto.randomUUID(),
@@ -182,50 +224,55 @@ export function LiveAssistantPage() {
             <label>
               Aktuell minut
               <input
-                value={stats.minute}
-                onChange={(event) => setStats({ ...stats, minute: Math.max(0, Math.round(safeNumber(event.target.value) ?? 0)) })}
+                inputMode="numeric"
+                value={form.minute}
+                onChange={(event) => setForm((current) => ({ ...current, minute: event.target.value }))}
+                onBlur={() => commitIntegerField('minute')}
               />
             </label>
             <label>
               Layodds
               <input
-                value={stats.layOdds ?? ''}
-                onChange={(event) => setStats({ ...stats, layOdds: safeNumber(event.target.value) })}
+                inputMode="decimal"
+                value={form.layOdds}
+                onChange={(event) => setForm((current) => ({ ...current, layOdds: event.target.value.replace(',', '.') }))}
+                onBlur={() => commitDecimalField('layOdds')}
               />
             </label>
             <label>
               Total live-xG
               <input
-                value={stats.liveXg ?? ''}
-                onChange={(event) => setStats({ ...stats, liveXg: safeNumber(event.target.value) })}
+                inputMode="decimal"
+                value={form.liveXg}
+                onChange={(event) => setForm((current) => ({ ...current, liveXg: event.target.value.replace(',', '.') }))}
+                onBlur={() => commitDecimalField('liveXg')}
               />
             </label>
             <label>
               Hemmaskott
               <input
-                value={stats.homeShots}
-                onChange={(event) => setStats({ ...stats, homeShots: Math.max(0, Math.round(safeNumber(event.target.value) ?? 0)) })}
+                inputMode="numeric"
+                value={form.homeShots}
+                onChange={(event) => setForm((current) => ({ ...current, homeShots: event.target.value }))}
+                onBlur={() => commitIntegerField('homeShots')}
               />
             </label>
             <label>
               Bortaskott
               <input
-                value={stats.awayShots}
-                onChange={(event) => setStats({ ...stats, awayShots: Math.max(0, Math.round(safeNumber(event.target.value) ?? 0)) })}
+                inputMode="numeric"
+                value={form.awayShots}
+                onChange={(event) => setForm((current) => ({ ...current, awayShots: event.target.value }))}
+                onBlur={() => commitIntegerField('awayShots')}
               />
             </label>
             <label>
               Skott på mål totalt
               <input
-                value={stats.homeShotsOnTarget + stats.awayShotsOnTarget}
-                onChange={(event) => {
-                  const total = Math.max(0, Math.round(safeNumber(event.target.value) ?? 0))
-                  setStats({
-                    ...stats,
-                    homeShotsOnTarget: Math.ceil(total / 2),
-                    awayShotsOnTarget: Math.floor(total / 2),
-                  })
-                }}
+                inputMode="numeric"
+                value={form.shotsOnTargetTotal}
+                onChange={(event) => setForm((current) => ({ ...current, shotsOnTargetTotal: event.target.value }))}
+                onBlur={() => commitIntegerField('shotsOnTargetTotal')}
               />
             </label>
           </div>

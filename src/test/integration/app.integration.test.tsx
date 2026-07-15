@@ -46,8 +46,11 @@ describe('app integration', () => {
 
     await user.clear(screen.getByLabelText('Aktuell minut'))
     await user.type(screen.getByLabelText('Aktuell minut'), '20')
+    await user.tab()
     await user.type(screen.getByLabelText('Layodds'), '2.4')
+    await user.tab()
     await user.type(screen.getByLabelText('Total live-xG'), '0.6')
+    await user.tab()
     await user.click(screen.getByRole('button', { name: /Hemmaskott/ }))
     await user.click(screen.getByRole('button', { name: /Hemmaskott/ }))
     await user.click(screen.getByRole('button', { name: /Bortaskott/ }))
